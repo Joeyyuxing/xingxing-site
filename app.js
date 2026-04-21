@@ -602,17 +602,46 @@ addEventListener('resize',()=>{rSolar();if(viewMode==='content'){cv.width=innerW
 // 2. 在 环境配置 > 安全配置 中添加你的域名（如 xxx.github.io）
 const TCB_ENV_ID = 'xingxingdexiaopozhan-d3acdbae4a3';
 const TCB_ACCESS_KEY = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL3hpbmd4aW5nZGV4aWFvcG96aGFuLWQzYWNkYmFlNGEzLmFwLXNoYW5naGFpLnRjYi1hcGkudGVuY2VudGNsb3VkYXBpLmNvbSIsInN1YiI6ImFub24iLCJhdWQiOiJ4aW5neGluZ2RleGlhb3Bvemhhbi1kM2FjZGJhZTRhMyIsImV4cCI6NDA4MDQyMzYyNSwiaWF0IjoxNzc2NzQwNDI1LCJub25jZSI6InNubVpma200U0RXTGdqSkU1NXBUYUEiLCJhdF9oYXNoIjoic25tWmZrbTRTRFdMZ2pKRTU1cFRhQSIsIm5hbWUiOiJBbm9ueW1vdXMiLCJzY29wZSI6ImFub255bW91cyIsInByb2plY3RfaWQiOiJ4aW5neGluZ2RleGlhb3Bvemhhbi1kM2FjZGJhZTRhMyIsIm1ldGEiOnsicGxhdGZvcm0iOiJQdWJsaXNoYWJsZUtleSJ9LCJ1c2VyX3R5cGUiOiIiLCJjbGllbnRfdHlwZSI6ImNsaWVudF91c2VyIiwiaXNfc3lzdGVtX2FkbWluIjpmYWxzZX0.l6W26whGJNLoG3vNBGNxYBRYJY9kDlJ4x6rMOO5IEPxYS_jnVljJCORebVyCmiKDhLQseDOSSs73GBWnfyW3hC3z_syrDgquVtzi2mX6bWUveUx9j42k96xyX4t4FvfXlKhFfyHUOtq8MRO83PlWCoWFGFgVlvJwwyLbzVgRjeeDpanIiBRzn9JvGctWvdwd80NnoIpuJmxUNCrSxtblHAzEFlkObm1UKXExCJendM6wfikkKI3g0xlZcZuYmOJ_B4rHb_HjN2miN0YWxzllRHc49tJeMBgAr7sZU1N9YaYjVZ-1Q-wL9Y3WdQXJ9tb0mVU_lAaxKLt8hR7ok09V1Q';
-let _tcbApp = null, _tcbDb = null;
-const _tcbReady = (typeof cloudbase !== 'undefined' && TCB_ENV_ID !== 'YOUR_ENV_ID');
-if(_tcbReady){
+let _tcbApp = null, _tcbDb = null, _tcbReady = false;
+let _tcbInitPromise = null;
+if(typeof cloudbase !== 'undefined' && TCB_ENV_ID !== 'YOUR_ENV_ID'){
   _tcbApp = cloudbase.init({ env: TCB_ENV_ID, accessKey: TCB_ACCESS_KEY });
   _tcbDb = _tcbApp.database();
+  // 先尝试用 accessKey 直接请求，如果失败则做匿名登录
+  _tcbInitPromise = (async()=>{
+    try{
+      // 测试是否可以直接访问数据库
+      await _tcbDb.collection('posts').limit(1).get();
+      _tcbReady = true;
+      console.log('CloudBase ready (accessKey mode)');
+    }catch(e){
+      console.warn('accessKey direct access failed, trying anonymous login...', e);
+      try{
+        const auth = _tcbApp.auth;
+        if(auth && auth.signInAnonymously){
+          await auth.signInAnonymously();
+          _tcbReady = true;
+          console.log('CloudBase ready (anonymous login)');
+        }else if(auth && auth.anonymousAuthProvider){
+          await auth.anonymousAuthProvider().signIn();
+          _tcbReady = true;
+          console.log('CloudBase ready (anonymous auth provider)');
+        }
+      }catch(e2){
+        console.error('CloudBase init failed:', e2);
+        _tcbReady = false;
+      }
+    }
+  })();
+}else{
+  _tcbInitPromise = Promise.resolve();
 }
 
 /* ===== STORAGE (CloudBase Cloud) ===== */
 // 把文件（图片/视频）上传到 CloudBase 云存储，返回 CDN URL
 async function uploadFile(dataURL, name){
   try{
+    if(_tcbInitPromise) await _tcbInitPromise;
     if(!_tcbReady) return dataURL;
     // dataURL → Blob → File
     const arr = dataURL.split(',');
@@ -644,6 +673,8 @@ async function uploadFile(dataURL, name){
 
 async function loadPosts(){
   try{
+    // 等待 CloudBase 初始化完成
+    if(_tcbInitPromise) await _tcbInitPromise;
     if(!_tcbReady){
       // CloudBase not configured, fallback to localStorage
       try{const s=localStorage.getItem('xpz_ship');posts=s?JSON.parse(s):[]}catch(e2){posts=[]}
@@ -698,6 +729,7 @@ async function savePosts(){
 }
 
 async function cloudAddPost(postData){
+  if(_tcbInitPromise) await _tcbInitPromise;
   if(!_tcbReady) return;
   try{
     // Upload files to cloud first
@@ -725,6 +757,7 @@ async function cloudAddPost(postData){
 }
 
 async function cloudDeletePost(postId){
+  if(_tcbInitPromise) await _tcbInitPromise;
   if(!_tcbReady) return;
   try{
     const res = await _tcbDb.collection('posts').where({ postId: postId }).get();
@@ -735,6 +768,7 @@ async function cloudDeletePost(postId){
 }
 
 async function cloudUpdatePost(postId, fields){
+  if(_tcbInitPromise) await _tcbInitPromise;
   if(!_tcbReady) return;
   try{
     const res = await _tcbDb.collection('posts').where({ postId: postId }).get();
