@@ -605,33 +605,49 @@ const TCB_ACCESS_KEY = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1h
 let _tcbApp = null, _tcbDb = null, _tcbReady = false;
 let _tcbInitPromise = null;
 if(typeof cloudbase !== 'undefined' && TCB_ENV_ID !== 'YOUR_ENV_ID'){
-  // 优先用 accessKey 模式初始化
+  // 用 accessKey (Publishable Key) 初始化 SDK
   _tcbApp = cloudbase.init({ env: TCB_ENV_ID, accessKey: TCB_ACCESS_KEY });
   _tcbDb = _tcbApp.database();
   _tcbInitPromise = (async()=>{
     try{
-      // 测试 accessKey 是否生效
+      // accessKey 仅初始化 SDK，还需要登录才能操作资源
+      const auth = _tcbApp.auth({ persistence: 'local' });
+      // 检查是否已有登录态
+      let loggedIn = false;
+      try{
+        const loginState = await auth.getLoginState();
+        if(loginState) loggedIn = true;
+      }catch(e){}
+      if(!loggedIn){
+        // 匿名登录
+        if(auth.anonymousAuthProvider){
+          await auth.anonymousAuthProvider().signIn();
+        }else if(auth.signInAnonymously){
+          await auth.signInAnonymously();
+        }
+      }
+      // 验证数据库可访问
       await _tcbDb.collection('posts').limit(1).get();
       _tcbReady = true;
-      console.log('CloudBase ready (accessKey)');
+      console.log('CloudBase ready (accessKey + anonymous)');
     }catch(e){
-      console.warn('accessKey mode failed, trying anonymous login...', e.message || e);
+      console.warn('accessKey + anonymous failed:', e.message || e);
+      // 降级：不带 accessKey 重试
       try{
-        // 重新初始化（不带 accessKey）
         _tcbApp = cloudbase.init({ env: TCB_ENV_ID });
         _tcbDb = _tcbApp.database();
-        const auth = _tcbApp.auth({ persistence: 'local' });
-        const loginState = await auth.getLoginState();
-        if(!loginState){
-          // 尝试 anonymousAuthProvider（2.x API）
-          if(auth.anonymousAuthProvider){
-            await auth.anonymousAuthProvider().signIn();
-          }else{
-            await auth.signInAnonymously();
+        const auth2 = _tcbApp.auth({ persistence: 'local' });
+        const loginState2 = await auth2.getLoginState();
+        if(!loginState2){
+          if(auth2.anonymousAuthProvider){
+            await auth2.anonymousAuthProvider().signIn();
+          }else if(auth2.signInAnonymously){
+            await auth2.signInAnonymously();
           }
         }
+        await _tcbDb.collection('posts').limit(1).get();
         _tcbReady = true;
-        console.log('CloudBase ready (anonymous)');
+        console.log('CloudBase ready (fallback anonymous)');
       }catch(e2){
         console.error('CloudBase all auth failed:', e2.message || e2);
         _tcbReady = false;
@@ -643,7 +659,20 @@ if(typeof cloudbase !== 'undefined' && TCB_ENV_ID !== 'YOUR_ENV_ID'){
 }
 
 /* ===== STORAGE (CloudBase Cloud) ===== */
-// 把文件（图片/视频）上传到 CloudBase 云存储，返回 CDN URL
+// fileID (cloud://env.xxx/path) → 永久 CDN HTTPS 链接
+function fileIDToURL(fileID){
+  if(!fileID || !fileID.startsWith('cloud://')) return fileID;
+  // cloud://envId.bucket/path → https://bucket.tcb.qcloud.la/path
+  const rest = fileID.slice(8); // 去掉 "cloud://"
+  const dot = rest.indexOf('.');
+  const slash = rest.indexOf('/');
+  if(dot<0||slash<0) return fileID;
+  const bucket = rest.slice(dot+1, slash);
+  const path = rest.slice(slash+1);
+  return 'https://'+bucket+'.tcb.qcloud.la/'+path;
+}
+
+// 把文件（图片/视频）上传到 CloudBase 云存储，返回永久 CDN URL
 async function uploadFile(dataURL, name){
   try{
     if(_tcbInitPromise) await _tcbInitPromise;
@@ -661,13 +690,16 @@ async function uploadFile(dataURL, name){
       cloudPath: fileName,
       filePath: blob
     });
-    // 获取临时访问链接（有效期足够长）
     if(result.fileID){
-      const urlRes = await _tcbApp.getTempFileURL({ fileList: [result.fileID] });
-      if(urlRes.fileList && urlRes.fileList[0] && urlRes.fileList[0].tempFileURL){
-        return urlRes.fileList[0].tempFileURL;
-      }
-      return result.fileID; // fallback to fileID
+      // 优先用 getTempFileURL（公有读时返回永久链接）
+      try{
+        const urlRes = await _tcbApp.getTempFileURL({ fileList: [result.fileID] });
+        if(urlRes.fileList && urlRes.fileList[0] && urlRes.fileList[0].tempFileURL){
+          return urlRes.fileList[0].tempFileURL;
+        }
+      }catch(e2){ console.warn('getTempFileURL failed, using CDN URL', e2); }
+      // 兜底：直接构造 CDN 链接
+      return fileIDToURL(result.fileID);
     }
     return dataURL;
   }catch(e){
@@ -702,6 +734,38 @@ async function loadPosts(){
       saved: false,
       comments: d.comments || []
     }));
+    // 修复文件链接：把 cloud:// fileID 转为可访问的 HTTPS URL
+    // 同时尝试批量刷新临时链接
+    try{
+      const allFileIDs = [];
+      posts.forEach(p => {
+        p.files.forEach(f => {
+          if(f.data && f.data.startsWith('cloud://')) allFileIDs.push(f.data);
+        });
+      });
+      if(allFileIDs.length > 0 && _tcbApp){
+        // 分批获取（每批最多50个）
+        const batches = [];
+        for(let i=0;i<allFileIDs.length;i+=50) batches.push(allFileIDs.slice(i,i+50));
+        const urlMap = {};
+        for(const batch of batches){
+          try{
+            const r = await _tcbApp.getTempFileURL({ fileList: batch });
+            if(r.fileList) r.fileList.forEach(item => {
+              if(item.tempFileURL) urlMap[item.fileID] = item.tempFileURL;
+            });
+          }catch(e){ console.warn('Batch getTempFileURL failed', e); }
+        }
+        // 用获取到的链接替换 fileID，获取不到的用 CDN 兜底
+        posts.forEach(p => {
+          p.files.forEach(f => {
+            if(f.data && f.data.startsWith('cloud://')){
+              f.data = urlMap[f.data] || fileIDToURL(f.data);
+            }
+          });
+        });
+      }
+    }catch(e){ console.warn('File URL refresh failed', e); }
     // restore per-device liked/saved state
     try{
       const local = JSON.parse(localStorage.getItem('xpz_local_state')||'{}');
