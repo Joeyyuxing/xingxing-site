@@ -605,30 +605,35 @@ const TCB_ACCESS_KEY = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1h
 let _tcbApp = null, _tcbDb = null, _tcbReady = false;
 let _tcbInitPromise = null;
 if(typeof cloudbase !== 'undefined' && TCB_ENV_ID !== 'YOUR_ENV_ID'){
+  // 优先用 accessKey 模式初始化
   _tcbApp = cloudbase.init({ env: TCB_ENV_ID, accessKey: TCB_ACCESS_KEY });
   _tcbDb = _tcbApp.database();
-  // 先尝试用 accessKey 直接请求，如果失败则做匿名登录
   _tcbInitPromise = (async()=>{
     try{
-      // 测试是否可以直接访问数据库
+      // 测试 accessKey 是否生效
       await _tcbDb.collection('posts').limit(1).get();
       _tcbReady = true;
-      console.log('CloudBase ready (accessKey mode)');
+      console.log('CloudBase ready (accessKey)');
     }catch(e){
-      console.warn('accessKey direct access failed, trying anonymous login...', e);
+      console.warn('accessKey mode failed, trying anonymous login...', e.message || e);
       try{
-        const auth = _tcbApp.auth;
-        if(auth && auth.signInAnonymously){
-          await auth.signInAnonymously();
-          _tcbReady = true;
-          console.log('CloudBase ready (anonymous login)');
-        }else if(auth && auth.anonymousAuthProvider){
-          await auth.anonymousAuthProvider().signIn();
-          _tcbReady = true;
-          console.log('CloudBase ready (anonymous auth provider)');
+        // 重新初始化（不带 accessKey）
+        _tcbApp = cloudbase.init({ env: TCB_ENV_ID });
+        _tcbDb = _tcbApp.database();
+        const auth = _tcbApp.auth({ persistence: 'local' });
+        const loginState = await auth.getLoginState();
+        if(!loginState){
+          // 尝试 anonymousAuthProvider（2.x API）
+          if(auth.anonymousAuthProvider){
+            await auth.anonymousAuthProvider().signIn();
+          }else{
+            await auth.signInAnonymously();
+          }
         }
+        _tcbReady = true;
+        console.log('CloudBase ready (anonymous)');
       }catch(e2){
-        console.error('CloudBase init failed:', e2);
+        console.error('CloudBase all auth failed:', e2.message || e2);
         _tcbReady = false;
       }
     }
