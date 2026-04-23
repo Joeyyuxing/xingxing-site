@@ -208,31 +208,32 @@ let sW,sH,sCx,sCy,sScale=1,sStars=[],sNebulae=[],sGalaxies=[],hov=null,pPos=[];
 function rSolar(){
   sW=sc.width=innerWidth;sH=sc.height=innerHeight;sCx=sW/2;sCy=sH/2;
   sScale=Math.min(sW/900,sH/800,1.2);if(sScale<.45)sScale=.45;
-  // multi-layer stars — MAX VISIBILITY mode
+  // multi-layer stars — EXTREME MODE: max density, max size, always bright
   sStars=[];
   const area=sW*sH;
   const dens=area/1e6;
-  const N1=Math.round(550*dens), N2=Math.round(280*dens), N3=Math.round(160*dens), N4=Math.round(120*dens), N5=Math.round(55*dens);
-  // Layer 1: background dust — bright baseline, every dot visible
-  for(let i=0;i<N1;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.8+.6,a:Math.random()*.2+.55,o:Math.random()*1e3,s:.0004+Math.random()*.0008,c:'210,220,240',sp:0,amp:.3});
-  // Layer 2: mid stars — solid obvious presence
-  for(let i=0;i<N2;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.3+.9,a:Math.random()*.25+.7,o:Math.random()*1e3,s:.0008+Math.random()*.0015,c:'230,238,255',sp:0,amp:.35});
+  const N1=Math.round(1800*dens), N2=Math.round(900*dens), N3=Math.round(500*dens), N4=Math.round(320*dens), N5=Math.round(140*dens);
+  // Layer 1: background dust — never dim, always visible
+  for(let i=0;i<N1;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.0+.9,a:Math.random()*.15+.75,o:Math.random()*1e3,s:.0004+Math.random()*.0008,c:'220,230,250',sp:0,amp:.2});
+  // Layer 2: mid stars — strong presence
+  for(let i=0;i<N2;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.6+1.3,a:Math.random()*.15+.85,o:Math.random()*1e3,s:.0008+Math.random()*.0015,c:'235,243,255',sp:0,amp:.25});
   // Layer 3: bright colored stars
-  for(let i=0;i<N3;i++){const colors=['240,248,255','255,238,190','220,232,255','255,205,170','200,228,255','255,220,205','255,190,175'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.5+1.3,a:Math.random()*.25+.8,o:Math.random()*1e3,s:.0012+Math.random()*.003,c:colors[Math.floor(Math.random()*colors.length)],sp:0,amp:.4})}
-  // Layer 4: sparkle stars — BIG bright cross rays
-  for(let i=0;i<N4;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.2+1.8,a:Math.random()*.2+.85,o:Math.random()*1e3,s:.002+Math.random()*.007,c:colors[Math.floor(Math.random()*colors.length)],sp:1,amp:.45})}
-  // Layer 5: pulse stars — hero stars, huge halo
-  for(let i=0;i<N5;i++){const colors=['255,255,255','245,250,255','255,245,235','255,240,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.4+2.2,a:Math.random()*.15+.9,o:Math.random()*1e3,s:.0005+Math.random()*.001,c:colors[Math.floor(Math.random()*colors.length)],sp:2,amp:.4})}
-  // nebulae / cosmic clouds
+  for(let i=0;i<N3;i++){const colors=['245,250,255','255,238,190','225,237,255','255,205,170','205,230,255','255,220,205','255,190,175','255,240,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.8+1.8,a:Math.random()*.15+.9,o:Math.random()*1e3,s:.0012+Math.random()*.003,c:colors[Math.floor(Math.random()*colors.length)],sp:0,amp:.3})}
+  // Layer 4: sparkle stars — HUGE bright cross rays
+  for(let i=0;i<N4;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.5+2.5,a:Math.random()*.1+.95,o:Math.random()*1e3,s:.002+Math.random()*.007,c:colors[Math.floor(Math.random()*colors.length)],sp:1,amp:.35})}
+  // Layer 5: pulse hero stars — massive halo
+  for(let i=0;i<N5;i++){const colors=['255,255,255','245,250,255','255,245,235','255,240,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.8+3.2,a:1,o:Math.random()*1e3,s:.0005+Math.random()*.001,c:colors[Math.floor(Math.random()*colors.length)],sp:2,amp:.3})}
+  // nebulae / cosmic clouds — brighter, more saturated
   sNebulae=[];
-  sNebulae.push({x:sW*.15,y:sH*.2,rx:sW*.18,ry:sH*.12,c:'60,30,100',a:.04,rot:.2});
-  sNebulae.push({x:sW*.82,y:sH*.15,rx:sW*.12,ry:sH*.08,c:'30,50,110',a:.035,rot:-.3});
-  sNebulae.push({x:sW*.08,y:sH*.75,rx:sW*.15,ry:sH*.1,c:'50,25,80',a:.03,rot:.5});
-  sNebulae.push({x:sW*.9,y:sH*.7,rx:sW*.1,ry:sH*.14,c:'25,45,90',a:.03,rot:-.1});
-  // milky way band (diagonal)
-  sNebulae.push({x:sW*.35,y:sH*.1,rx:sW*.4,ry:sH*.04,c:'60,55,90',a:.025,rot:-.45});
-  sNebulae.push({x:sW*.55,y:sH*.18,rx:sW*.35,ry:sH*.035,c:'50,45,85',a:.02,rot:-.45});
-  sNebulae.push({x:sW*.7,y:sH*.85,rx:sW*.3,ry:sH*.04,c:'55,40,80',a:.025,rot:-.45});
+  sNebulae.push({x:sW*.15,y:sH*.2,rx:sW*.22,ry:sH*.15,c:'110,60,180',a:.09,rot:.2});
+  sNebulae.push({x:sW*.82,y:sH*.15,rx:sW*.16,ry:sH*.11,c:'60,90,200',a:.08,rot:-.3});
+  sNebulae.push({x:sW*.08,y:sH*.75,rx:sW*.18,ry:sH*.13,c:'130,50,160',a:.08,rot:.5});
+  sNebulae.push({x:sW*.9,y:sH*.7,rx:sW*.13,ry:sH*.17,c:'50,80,190',a:.075,rot:-.1});
+  sNebulae.push({x:sW*.5,y:sH*.5,rx:sW*.3,ry:sH*.2,c:'70,50,150',a:.04,rot:.1});
+  // milky way band (diagonal) — brighter
+  sNebulae.push({x:sW*.35,y:sH*.1,rx:sW*.45,ry:sH*.05,c:'120,110,170',a:.06,rot:-.45});
+  sNebulae.push({x:sW*.55,y:sH*.18,rx:sW*.4,ry:sH*.045,c:'110,100,165',a:.055,rot:-.45});
+  sNebulae.push({x:sW*.7,y:sH*.85,rx:sW*.35,ry:sH*.05,c:'115,95,160',a:.06,rot:-.45});
   // distant galaxies
   sGalaxies=[];
   for(let i=0;i<5;i++)sGalaxies.push({x:Math.random()*sW,y:Math.random()*sH*.4+sH*.05,r:2+Math.random()*3,a:Math.random()*.08+.03,rot:Math.random()*Math.PI});
