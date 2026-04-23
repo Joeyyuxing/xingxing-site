@@ -208,21 +208,21 @@ let sW,sH,sCx,sCy,sScale=1,sStars=[],sNebulae=[],sGalaxies=[],hov=null,pPos=[];
 function rSolar(){
   sW=sc.width=innerWidth;sH=sc.height=innerHeight;sCx=sW/2;sCy=sH/2;
   sScale=Math.min(sW/900,sH/800,1.2);if(sScale<.45)sScale=.45;
-  // multi-layer stars: density-based so larger screens get more stars
+  // multi-layer stars — bigger, brighter, visible at a glance
   sStars=[];
   const area=sW*sH;
-  const dens=area/1e6; // ~1.0 on 1000x1000
-  const N1=Math.round(700*dens), N2=Math.round(360*dens), N3=Math.round(160*dens), N4=Math.round(110*dens), N5=Math.round(32*dens);
-  // Layer 1: dim background dust (gentle shimmer) — brighter baseline so it's visible
-  for(let i=0;i<N1;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.5+.15,a:Math.random()*.28+.12,o:Math.random()*1e3,s:.0003+Math.random()*.0006,c:'190,200,220',sp:0});
-  // Layer 2: mid-brightness stars (visible twinkle)
-  for(let i=0;i<N2;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.8+.25,a:Math.random()*.5+.22,o:Math.random()*1e3,s:.0006+Math.random()*.0012,c:'210,222,245',sp:0});
-  // Layer 3: bright colored stars (warm & cool mix)
-  for(let i=0;i<N3;i++){const colors=['230,240,255','255,245,210','210,225,255','255,215,185','200,230,255','255,230,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.8+.55,a:Math.random()*.55+.38,o:Math.random()*1e3,s:.001+Math.random()*.0025,c:colors[Math.floor(Math.random()*colors.length)],sp:0})}
-  // Layer 4: sparkle stars — cross rays, fast twinkle
-  for(let i=0;i<N4;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.55+.65,a:Math.random()*.55+.5,o:Math.random()*1e3,s:.0018+Math.random()*.006,c:colors[Math.floor(Math.random()*colors.length)],sp:1})}
-  // Layer 5: pulse stars — slow bright breathe with halo
-  for(let i=0;i<N5;i++){const colors=['255,255,255','245,250,255','255,245,235'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.6+.9,a:Math.random()*.4+.6,o:Math.random()*1e3,s:.0004+Math.random()*.0009,c:colors[Math.floor(Math.random()*colors.length)],sp:2})}
+  const dens=area/1e6;
+  const N1=Math.round(650*dens), N2=Math.round(320*dens), N3=Math.round(180*dens), N4=Math.round(140*dens), N5=Math.round(45*dens);
+  // Layer 1: background dust — visible baseline brightness, never fades below 25%
+  for(let i=0;i<N1;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.6+.3,a:Math.random()*.25+.3,o:Math.random()*1e3,s:.0004+Math.random()*.0008,c:'200,210,230',sp:0,amp:.35});
+  // Layer 2: mid stars — solid presence
+  for(let i=0;i<N2;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.0+.5,a:Math.random()*.3+.45,o:Math.random()*1e3,s:.0008+Math.random()*.0015,c:'220,230,250',sp:0,amp:.4});
+  // Layer 3: bright colored stars
+  for(let i=0;i<N3;i++){const colors=['235,245,255','255,240,200','215,230,255','255,210,175','195,225,255','255,225,210','255,195,180'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.1+.8,a:Math.random()*.35+.6,o:Math.random()*1e3,s:.0012+Math.random()*.003,c:colors[Math.floor(Math.random()*colors.length)],sp:0,amp:.45})}
+  // Layer 4: sparkle stars — big, bright, cross rays
+  for(let i=0;i<N4;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.9+1.1,a:Math.random()*.3+.7,o:Math.random()*1e3,s:.002+Math.random()*.007,c:colors[Math.floor(Math.random()*colors.length)],sp:1,amp:.5})}
+  // Layer 5: pulse stars — hero stars with big halo
+  for(let i=0;i<N5;i++){const colors=['255,255,255','245,250,255','255,245,235','255,240,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1+1.4,a:Math.random()*.25+.75,o:Math.random()*1e3,s:.0005+Math.random()*.001,c:colors[Math.floor(Math.random()*colors.length)],sp:2,amp:.5})}
   // nebulae / cosmic clouds
   sNebulae=[];
   sNebulae.push({x:sW*.15,y:sH*.2,rx:sW*.18,ry:sH*.12,c:'60,30,100',a:.04,rot:.2});
@@ -280,13 +280,26 @@ function dSolar(t){
     sx.restore();
   });
 
-  // stars
-  sStars.forEach(s=>{const f=.5+.5*Math.sin(t*s.s+s.o);const a=s.a*f;sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${a})`;sx.fill();
-    // sparkle: cross rays (enhanced — 4 directions + diagonal)
-    if(s.sp===1&&a>.25){const rl=s.r*6*f;const rd=s.r*3.5*f;sx.beginPath();sx.moveTo(s.x-rl,s.y);sx.lineTo(s.x+rl,s.y);sx.moveTo(s.x,s.y-rl);sx.lineTo(s.x,s.y+rl);sx.strokeStyle=`rgba(${s.c},${a*.3})`;sx.lineWidth=.5;sx.stroke();sx.beginPath();sx.moveTo(s.x-rd,s.y-rd);sx.lineTo(s.x+rd,s.y+rd);sx.moveTo(s.x+rd,s.y-rd);sx.lineTo(s.x-rd,s.y+rd);sx.strokeStyle=`rgba(${s.c},${a*.12})`;sx.lineWidth=.3;sx.stroke();const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);hg.addColorStop(0,`rgba(${s.c},${a*.2})`);hg.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*3,0,Math.PI*2);sx.fillStyle=hg;sx.fill()}
-    // pulse: slow breathe with soft halo
-    if(s.sp===2){const pf=.3+.7*(.5+.5*Math.sin(t*s.s+s.o));const pa=s.a*pf;const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*5);hg.addColorStop(0,`rgba(${s.c},${pa*.25})`);hg.addColorStop(.4,`rgba(${s.c},${pa*.08})`);hg.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*5,0,Math.PI*2);sx.fillStyle=hg;sx.fill();sx.beginPath();sx.arc(s.x,s.y,s.r*(1+pf*.3),0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${pa})`;sx.fill()}
+  // stars — every star gets a soft glow so they read as light sources, not dots
+  sx.save();sx.globalCompositeOperation='lighter';
+  sStars.forEach(s=>{
+    const amp=s.amp||.4;
+    const f=(1-amp)+amp*(.5+.5*Math.sin(t*s.s+s.o)); // e.g. .55..1 never goes dark
+    const a=Math.min(1,s.a*f);
+    // base halo for every star — creates the "glow" feeling
+    const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3.5);
+    hg.addColorStop(0,`rgba(${s.c},${a*.45})`);
+    hg.addColorStop(.5,`rgba(${s.c},${a*.12})`);
+    hg.addColorStop(1,`rgba(${s.c},0)`);
+    sx.beginPath();sx.arc(s.x,s.y,s.r*3.5,0,Math.PI*2);sx.fillStyle=hg;sx.fill();
+    // core
+    sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${a})`;sx.fill();
+    // sparkle: cross rays (8-way)
+    if(s.sp===1&&a>.35){const rl=s.r*7*f;const rd=s.r*4.5*f;sx.beginPath();sx.moveTo(s.x-rl,s.y);sx.lineTo(s.x+rl,s.y);sx.moveTo(s.x,s.y-rl);sx.lineTo(s.x,s.y+rl);sx.strokeStyle=`rgba(${s.c},${a*.55})`;sx.lineWidth=.7;sx.stroke();sx.beginPath();sx.moveTo(s.x-rd,s.y-rd);sx.lineTo(s.x+rd,s.y+rd);sx.moveTo(s.x+rd,s.y-rd);sx.lineTo(s.x-rd,s.y+rd);sx.strokeStyle=`rgba(${s.c},${a*.25})`;sx.lineWidth=.5;sx.stroke()}
+    // pulse: extra big breathing halo
+    if(s.sp===2){const pf=.4+.6*(.5+.5*Math.sin(t*s.s+s.o));const pa=s.a*pf;const hg2=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*7);hg2.addColorStop(0,`rgba(${s.c},${pa*.35})`);hg2.addColorStop(.4,`rgba(${s.c},${pa*.12})`);hg2.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*7,0,Math.PI*2);sx.fillStyle=hg2;sx.fill()}
   });
+  sx.restore();
 
   // orbit lines — elliptical with eccentricity
   P.forEach(p=>{if(!p.oR)return;
