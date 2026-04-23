@@ -208,18 +208,21 @@ let sW,sH,sCx,sCy,sScale=1,sStars=[],sNebulae=[],sGalaxies=[],hov=null,pPos=[];
 function rSolar(){
   sW=sc.width=innerWidth;sH=sc.height=innerHeight;sCx=sW/2;sCy=sH/2;
   sScale=Math.min(sW/900,sH/800,1.2);if(sScale<.45)sScale=.45;
-  // multi-layer stars: dim bg, mid, bright, sparkle, pulse
+  // multi-layer stars: density-based so larger screens get more stars
   sStars=[];
-  // Layer 1: dim background dust (gentle shimmer)
-  for(let i=0;i<350;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.4+.1,a:Math.random()*.18+.05,o:Math.random()*1e3,s:.0003+Math.random()*.0005,c:'180,190,210',sp:0});
+  const area=sW*sH;
+  const dens=area/1e6; // ~1.0 on 1000x1000
+  const N1=Math.round(700*dens), N2=Math.round(360*dens), N3=Math.round(160*dens), N4=Math.round(110*dens), N5=Math.round(32*dens);
+  // Layer 1: dim background dust (gentle shimmer) — brighter baseline so it's visible
+  for(let i=0;i<N1;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.5+.15,a:Math.random()*.28+.12,o:Math.random()*1e3,s:.0003+Math.random()*.0006,c:'190,200,220',sp:0});
   // Layer 2: mid-brightness stars (visible twinkle)
-  for(let i=0;i<180;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.7+.2,a:Math.random()*.4+.12,o:Math.random()*1e3,s:.0005+Math.random()*.001,c:'200,215,240',sp:0});
+  for(let i=0;i<N2;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.8+.25,a:Math.random()*.5+.22,o:Math.random()*1e3,s:.0006+Math.random()*.0012,c:'210,222,245',sp:0});
   // Layer 3: bright colored stars (warm & cool mix)
-  for(let i=0;i<70;i++){const colors=['230,240,255','255,245,210','210,225,255','255,215,185','200,230,255','255,230,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.7+.5,a:Math.random()*.5+.28,o:Math.random()*1e3,s:.0008+Math.random()*.002,c:colors[Math.floor(Math.random()*colors.length)],sp:0})}
+  for(let i=0;i<N3;i++){const colors=['230,240,255','255,245,210','210,225,255','255,215,185','200,230,255','255,230,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.8+.55,a:Math.random()*.55+.38,o:Math.random()*1e3,s:.001+Math.random()*.0025,c:colors[Math.floor(Math.random()*colors.length)],sp:0})}
   // Layer 4: sparkle stars — cross rays, fast twinkle
-  for(let i=0;i<45;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.5+.6,a:Math.random()*.6+.4,o:Math.random()*1e3,s:.0015+Math.random()*.005,c:colors[Math.floor(Math.random()*colors.length)],sp:1})}
+  for(let i=0;i<N4;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.55+.65,a:Math.random()*.55+.5,o:Math.random()*1e3,s:.0018+Math.random()*.006,c:colors[Math.floor(Math.random()*colors.length)],sp:1})}
   // Layer 5: pulse stars — slow bright breathe with halo
-  for(let i=0;i<15;i++){const colors=['255,255,255','245,250,255','255,245,235'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.5+.8,a:Math.random()*.4+.5,o:Math.random()*1e3,s:.0004+Math.random()*.0008,c:colors[Math.floor(Math.random()*colors.length)],sp:2})}
+  for(let i=0;i<N5;i++){const colors=['255,255,255','245,250,255','255,245,235'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.6+.9,a:Math.random()*.4+.6,o:Math.random()*1e3,s:.0004+Math.random()*.0009,c:colors[Math.floor(Math.random()*colors.length)],sp:2})}
   // nebulae / cosmic clouds
   sNebulae=[];
   sNebulae.push({x:sW*.15,y:sH*.2,rx:sW*.18,ry:sH*.12,c:'60,30,100',a:.04,rot:.2});
@@ -860,13 +863,14 @@ let sP=[],sS=[],lt=0;
 
 function initScene(t){
   if(!t)return;const s=t.scene,W=cv.width,H=cv.height,tc=t.sc||'220,225,240';sP=[];sS=[];
-  const starN=s==='cosmos'||s==='deep'?450:s==='ocean'||s==='snow'||s==='forest'?60:s==='sand'||s==='city'?40:200;
+  const dens=(W*H)/1e6;
+  const starN=s==='cosmos'||s==='deep'?Math.round(850*dens):s==='ocean'||s==='snow'||s==='forest'?Math.round(120*dens):s==='sand'||s==='city'?Math.round(80*dens):Math.round(350*dens);
   const starH=s==='ocean'?H*.4:s==='forest'?H*.3:H;
   for(let i=0;i<starN;i++){
     const colors=s==='cosmos'||s==='deep'?['200,210,240','230,235,255','255,240,210','180,200,240','255,220,180','220,240,255']:[tc];
     const c=colors[Math.floor(Math.random()*colors.length)];
-    const bright=s==='cosmos'||s==='deep'?Math.random()*.55+.06:Math.random()*.3+.05;
-    sP.push({T:'s',x:Math.random()*W,y:Math.random()*starH,r:Math.random()*(s==='cosmos'?1.0:.8)+.1,a:bright,o:Math.random()*1e3,v:.0004+Math.random()*.001,c});
+    const bright=s==='cosmos'||s==='deep'?Math.random()*.6+.15:Math.random()*.35+.08;
+    sP.push({T:'s',x:Math.random()*W,y:Math.random()*starH,r:Math.random()*(s==='cosmos'?1.1:.85)+.15,a:bright,o:Math.random()*1e3,v:.0004+Math.random()*.0012,c});
   }
   // cosmos/deep: rich nebulae + milky way
   if(s==='cosmos'||s==='deep'){
@@ -889,14 +893,15 @@ function initScene(t){
       sP.push({T:'s',x:cx,y:cy,r:Math.random()*.5+.2,a:Math.random()*.35+.15,o:Math.random()*1e3,v:.0005+Math.random()*.001,c:'220,225,255'});
     }
     // sparkle stars — bright twinkling with cross rays
-    for(let i=0;i<35;i++){
+    const spN=Math.round(80*dens), puN=Math.round(28*dens);
+    for(let i=0;i<spN;i++){
       const colors=['255,255,255','240,248,255','255,250,230','220,235,255'];
-      sP.push({T:'sp',x:Math.random()*W,y:Math.random()*H,r:Math.random()*.5+.5,a:Math.random()*.55+.38,o:Math.random()*1e3,v:.0015+Math.random()*.005,c:colors[Math.floor(Math.random()*colors.length)]});
+      sP.push({T:'sp',x:Math.random()*W,y:Math.random()*H,r:Math.random()*.55+.6,a:Math.random()*.6+.45,o:Math.random()*1e3,v:.0018+Math.random()*.006,c:colors[Math.floor(Math.random()*colors.length)]});
     }
     // pulse stars — slow breathing halo
-    for(let i=0;i<12;i++){
+    for(let i=0;i<puN;i++){
       const colors=['255,255,255','245,250,255','255,245,235'];
-      sP.push({T:'pu',x:Math.random()*W,y:Math.random()*H,r:Math.random()*.5+.7,a:Math.random()*.4+.45,o:Math.random()*1e3,v:.0004+Math.random()*.0008,c:colors[Math.floor(Math.random()*colors.length)]});
+      sP.push({T:'pu',x:Math.random()*W,y:Math.random()*H,r:Math.random()*.55+.85,a:Math.random()*.4+.55,o:Math.random()*1e3,v:.0004+Math.random()*.0009,c:colors[Math.floor(Math.random()*colors.length)]});
     }
   }
   if(s==='ocean'){for(let i=0;i<3;i++)sP.push({T:'wl',y:H*(.42+i*.04),a:.05-.01*i,v:.0008+i*.0003,amp:8+i*4,o:i*50,c:`100,${200-i*15},${230-i*10}`});for(let i=0;i<80;i++)sP.push({T:'w',x:Math.random()*W,y:H*.4+Math.random()*H*.6,r:Math.random()*1.5+.3,a:Math.random()*.15+.03,o:Math.random()*1e3,sx:Math.random()*.2-.1})}
