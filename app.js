@@ -243,8 +243,12 @@ rSolar();
 function lc(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgb(${Math.min(255,r+a*255|0)},${Math.min(255,g+a*255|0)},${Math.min(255,b+a*255|0)})`}
 function dc(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgb(${Math.max(0,r-a*255|0)},${Math.max(0,g-a*255|0)},${Math.max(0,b-a*255|0)})`}
 
+let sFpsFrames=0,sFpsLast=0,sFpsVal=60,sFpsLowCount=0,sLowPerf=false;
 function dSolar(t){
   if(viewMode!=='solar'){requestAnimationFrame(dSolar);return}
+  // FPS monitor + auto degrade
+  sFpsFrames++;
+  if(t-sFpsLast>=1000){sFpsVal=sFpsFrames;sFpsFrames=0;sFpsLast=t;if(sFpsVal<20)sFpsLowCount++;else sFpsLowCount=Math.max(0,sFpsLowCount-1);if(sFpsLowCount>=2&&!sLowPerf){sLowPerf=true;console.warn('[stars] auto-degraded to low perf mode');}}
   sx.clearRect(0,0,sW,sH);
 
   // === breathing + parallax camera transform ===
@@ -281,40 +285,34 @@ function dSolar(t){
     sx.restore();
   });
 
-  // stars — OPTIMIZED: simple dots for small, gradient for big
+  // stars — OPTIMIZED: simple dots for small, gradient for big (auto-degrade on low FPS)
   sx.save();sx.globalCompositeOperation='lighter';
-  sStars.forEach(s=>{
-    const amp=s.amp||.4;
-    const f=(1-amp)+amp*(.5+.5*Math.sin(t*s.s+s.o));
-    const a=Math.min(1,s.a*f);
-    if(s.sp===0){
-      // simple dot — no gradient, ultra fast
-      sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${a})`;sx.fill();
-    }else if(s.sp===3){
-      // colored star with small halo (6x)
-      const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*6);
-      hg.addColorStop(0,`rgba(${s.c},${a*.9})`);
-      hg.addColorStop(.35,`rgba(${s.c},${a*.3})`);
-      hg.addColorStop(.7,`rgba(${s.c},${a*.08})`);
-      hg.addColorStop(1,`rgba(${s.c},0)`);
-      sx.beginPath();sx.arc(s.x,s.y,s.r*6,0,Math.PI*2);sx.fillStyle=hg;sx.fill();
-      sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${Math.min(1,a*1.1)})`;sx.fill();
-    }else{
-      // sparkle/pulse — full gradient halo (10x)
-      const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*10);
-      hg.addColorStop(0,`rgba(${s.c},${a*.95})`);
-      hg.addColorStop(.2,`rgba(${s.c},${a*.5})`);
-      hg.addColorStop(.5,`rgba(${s.c},${a*.18})`);
-      hg.addColorStop(.8,`rgba(${s.c},${a*.05})`);
-      hg.addColorStop(1,`rgba(${s.c},0)`);
-      sx.beginPath();sx.arc(s.x,s.y,s.r*10,0,Math.PI*2);sx.fillStyle=hg;sx.fill();
-      sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${Math.min(1,a*1.2)})`;sx.fill();
-      sx.beginPath();sx.arc(s.x,s.y,s.r*.5,0,Math.PI*2);sx.fillStyle=`rgba(255,255,255,${a*.9})`;sx.fill();
-    }
-    // sparkle: cross rays
-    if(s.sp===1){const rl=s.r*12*f;const rd=s.r*8*f;sx.beginPath();sx.moveTo(s.x-rl,s.y);sx.lineTo(s.x+rl,s.y);sx.moveTo(s.x,s.y-rl);sx.lineTo(s.x,s.y+rl);sx.strokeStyle=`rgba(${s.c},${a*.75})`;sx.lineWidth=1.2;sx.stroke();sx.beginPath();sx.moveTo(s.x-rd,s.y-rd);sx.lineTo(s.x+rd,s.y+rd);sx.moveTo(s.x+rd,s.y-rd);sx.lineTo(s.x-rd,s.y+rd);sx.strokeStyle=`rgba(${s.c},${a*.4})`;sx.lineWidth=.8;sx.stroke()}
-    // pulse: huge breathing halo (18x)
-    if(s.sp===2){const pf=.4+.6*(.5+.5*Math.sin(t*s.s+s.o));const pa=s.a*pf;const hg2=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*18);hg2.addColorStop(0,`rgba(${s.c},${pa*.55})`);hg2.addColorStop(.3,`rgba(${s.c},${pa*.2})`);hg2.addColorStop(.6,`rgba(${s.c},${pa*.06})`);hg2.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*18,0,Math.PI*2);sx.fillStyle=hg2;sx.fill()}
+  if(sLowPerf){
+    // emergency mode: only draw simple dots, no gradients at all
+    sStars.forEach(s=>{const a=s.a;sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${a})`;sx.fill();});
+  }else{
+    sStars.forEach(s=>{
+      const amp=s.amp||.4;
+      const f=(1-amp)+amp*(.5+.5*Math.sin(t*s.s+s.o));
+      const a=Math.min(1,s.a*f);
+      if(s.sp===0){
+        sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${a})`;sx.fill();
+      }else if(s.sp===3){
+        const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*6);
+        hg.addColorStop(0,`rgba(${s.c},${a*.9})`);hg.addColorStop(.35,`rgba(${s.c},${a*.3})`);hg.addColorStop(.7,`rgba(${s.c},${a*.08})`);hg.addColorStop(1,`rgba(${s.c},0)`);
+        sx.beginPath();sx.arc(s.x,s.y,s.r*6,0,Math.PI*2);sx.fillStyle=hg;sx.fill();
+        sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${Math.min(1,a*1.1)})`;sx.fill();
+      }else{
+        const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*10);
+        hg.addColorStop(0,`rgba(${s.c},${a*.95})`);hg.addColorStop(.2,`rgba(${s.c},${a*.5})`);hg.addColorStop(.5,`rgba(${s.c},${a*.18})`);hg.addColorStop(.8,`rgba(${s.c},${a*.05})`);hg.addColorStop(1,`rgba(${s.c},0)`);
+        sx.beginPath();sx.arc(s.x,s.y,s.r*10,0,Math.PI*2);sx.fillStyle=hg;sx.fill();
+        sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${Math.min(1,a*1.2)})`;sx.fill();
+        sx.beginPath();sx.arc(s.x,s.y,s.r*.5,0,Math.PI*2);sx.fillStyle=`rgba(255,255,255,${a*.9})`;sx.fill();
+      }
+      if(s.sp===1){const rl=s.r*12*f;const rd=s.r*8*f;sx.beginPath();sx.moveTo(s.x-rl,s.y);sx.lineTo(s.x+rl,s.y);sx.moveTo(s.x,s.y-rl);sx.lineTo(s.x,s.y+rl);sx.strokeStyle=`rgba(${s.c},${a*.75})`;sx.lineWidth=1.2;sx.stroke();sx.beginPath();sx.moveTo(s.x-rd,s.y-rd);sx.lineTo(s.x+rd,s.y+rd);sx.moveTo(s.x+rd,s.y-rd);sx.lineTo(s.x-rd,s.y+rd);sx.strokeStyle=`rgba(${s.c},${a*.4})`;sx.lineWidth=.8;sx.stroke()}
+      if(s.sp===2){const pf=.4+.6*(.5+.5*Math.sin(t*s.s+s.o));const pa=s.a*pf;const hg2=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*18);hg2.addColorStop(0,`rgba(${s.c},${pa*.55})`);hg2.addColorStop(.3,`rgba(${s.c},${pa*.2})`);hg2.addColorStop(.6,`rgba(${s.c},${pa*.06})`);hg2.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*18,0,Math.PI*2);sx.fillStyle=hg2;sx.fill()}
+    });
+  }
   });
   sx.restore();
 
