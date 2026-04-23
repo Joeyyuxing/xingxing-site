@@ -208,13 +208,18 @@ let sW,sH,sCx,sCy,sScale=1,sStars=[],sNebulae=[],sGalaxies=[],hov=null,pPos=[];
 function rSolar(){
   sW=sc.width=innerWidth;sH=sc.height=innerHeight;sCx=sW/2;sCy=sH/2;
   sScale=Math.min(sW/900,sH/800,1.2);if(sScale<.45)sScale=.45;
-  // multi-layer stars: dim bg, mid, bright, sparkle
+  // multi-layer stars: dim bg, mid, bright, sparkle, pulse
   sStars=[];
-  for(let i=0;i<300;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.4+.1,a:Math.random()*.15+.04,o:Math.random()*1e3,s:.0002+Math.random()*.0003,c:'180,190,210',sp:0});
-  for(let i=0;i<150;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.7+.2,a:Math.random()*.3+.1,o:Math.random()*1e3,s:.0003+Math.random()*.0006,c:'200,215,240',sp:0});
-  for(let i=0;i<50;i++){const colors=['230,240,255','255,245,210','210,225,255','255,215,185'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.6+.5,a:Math.random()*.4+.25,o:Math.random()*1e3,s:.0005+Math.random()*.001,c:colors[Math.floor(Math.random()*colors.length)],sp:0})}
-  // extra sparkle stars — bright, fast twinkle
-  for(let i=0;i<25;i++){const colors=['255,255,255','240,248,255','255,250,230'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.4+.6,a:Math.random()*.5+.4,o:Math.random()*1e3,s:.001+Math.random()*.003,c:colors[Math.floor(Math.random()*colors.length)],sp:1})}
+  // Layer 1: dim background dust (gentle shimmer)
+  for(let i=0;i<350;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.4+.1,a:Math.random()*.18+.05,o:Math.random()*1e3,s:.0003+Math.random()*.0005,c:'180,190,210',sp:0});
+  // Layer 2: mid-brightness stars (visible twinkle)
+  for(let i=0;i<180;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.7+.2,a:Math.random()*.4+.12,o:Math.random()*1e3,s:.0005+Math.random()*.001,c:'200,215,240',sp:0});
+  // Layer 3: bright colored stars (warm & cool mix)
+  for(let i=0;i<70;i++){const colors=['230,240,255','255,245,210','210,225,255','255,215,185','200,230,255','255,230,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.7+.5,a:Math.random()*.5+.28,o:Math.random()*1e3,s:.0008+Math.random()*.002,c:colors[Math.floor(Math.random()*colors.length)],sp:0})}
+  // Layer 4: sparkle stars — cross rays, fast twinkle
+  for(let i=0;i<45;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.5+.6,a:Math.random()*.6+.4,o:Math.random()*1e3,s:.0015+Math.random()*.005,c:colors[Math.floor(Math.random()*colors.length)],sp:1})}
+  // Layer 5: pulse stars — slow bright breathe with halo
+  for(let i=0;i<15;i++){const colors=['255,255,255','245,250,255','255,245,235'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.5+.8,a:Math.random()*.4+.5,o:Math.random()*1e3,s:.0004+Math.random()*.0008,c:colors[Math.floor(Math.random()*colors.length)],sp:2})}
   // nebulae / cosmic clouds
   sNebulae=[];
   sNebulae.push({x:sW*.15,y:sH*.2,rx:sW*.18,ry:sH*.12,c:'60,30,100',a:.04,rot:.2});
@@ -274,8 +279,10 @@ function dSolar(t){
 
   // stars
   sStars.forEach(s=>{const f=.5+.5*Math.sin(t*s.s+s.o);const a=s.a*f;sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${a})`;sx.fill();
-    // sparkle: cross rays
-    if(s.sp&&a>.3){const rl=s.r*4*f;sx.beginPath();sx.moveTo(s.x-rl,s.y);sx.lineTo(s.x+rl,s.y);sx.moveTo(s.x,s.y-rl);sx.lineTo(s.x,s.y+rl);sx.strokeStyle=`rgba(${s.c},${a*.25})`;sx.lineWidth=.3;sx.stroke()}
+    // sparkle: cross rays (enhanced — 4 directions + diagonal)
+    if(s.sp===1&&a>.25){const rl=s.r*6*f;const rd=s.r*3.5*f;sx.beginPath();sx.moveTo(s.x-rl,s.y);sx.lineTo(s.x+rl,s.y);sx.moveTo(s.x,s.y-rl);sx.lineTo(s.x,s.y+rl);sx.strokeStyle=`rgba(${s.c},${a*.3})`;sx.lineWidth=.5;sx.stroke();sx.beginPath();sx.moveTo(s.x-rd,s.y-rd);sx.lineTo(s.x+rd,s.y+rd);sx.moveTo(s.x+rd,s.y-rd);sx.lineTo(s.x-rd,s.y+rd);sx.strokeStyle=`rgba(${s.c},${a*.12})`;sx.lineWidth=.3;sx.stroke();const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);hg.addColorStop(0,`rgba(${s.c},${a*.2})`);hg.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*3,0,Math.PI*2);sx.fillStyle=hg;sx.fill()}
+    // pulse: slow breathe with soft halo
+    if(s.sp===2){const pf=.3+.7*(.5+.5*Math.sin(t*s.s+s.o));const pa=s.a*pf;const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*5);hg.addColorStop(0,`rgba(${s.c},${pa*.25})`);hg.addColorStop(.4,`rgba(${s.c},${pa*.08})`);hg.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*5,0,Math.PI*2);sx.fillStyle=hg;sx.fill();sx.beginPath();sx.arc(s.x,s.y,s.r*(1+pf*.3),0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${pa})`;sx.fill()}
   });
 
   // orbit lines — elliptical with eccentricity
@@ -853,13 +860,13 @@ let sP=[],sS=[],lt=0;
 
 function initScene(t){
   if(!t)return;const s=t.scene,W=cv.width,H=cv.height,tc=t.sc||'220,225,240';sP=[];sS=[];
-  const starN=s==='cosmos'||s==='deep'?350:s==='ocean'||s==='snow'||s==='forest'?60:s==='sand'||s==='city'?40:200;
+  const starN=s==='cosmos'||s==='deep'?450:s==='ocean'||s==='snow'||s==='forest'?60:s==='sand'||s==='city'?40:200;
   const starH=s==='ocean'?H*.4:s==='forest'?H*.3:H;
   for(let i=0;i<starN;i++){
-    const colors=s==='cosmos'||s==='deep'?['200,210,240','230,235,255','255,240,210','180,200,240','255,220,180']:[tc];
+    const colors=s==='cosmos'||s==='deep'?['200,210,240','230,235,255','255,240,210','180,200,240','255,220,180','220,240,255']:[tc];
     const c=colors[Math.floor(Math.random()*colors.length)];
-    const bright=s==='cosmos'||s==='deep'?Math.random()*.45+.05:Math.random()*.3+.05;
-    sP.push({T:'s',x:Math.random()*W,y:Math.random()*starH,r:Math.random()*(s==='cosmos'?.9:.8)+.1,a:bright,o:Math.random()*1e3,v:.0003+Math.random()*.0006,c});
+    const bright=s==='cosmos'||s==='deep'?Math.random()*.55+.06:Math.random()*.3+.05;
+    sP.push({T:'s',x:Math.random()*W,y:Math.random()*starH,r:Math.random()*(s==='cosmos'?1.0:.8)+.1,a:bright,o:Math.random()*1e3,v:.0004+Math.random()*.001,c});
   }
   // cosmos/deep: rich nebulae + milky way
   if(s==='cosmos'||s==='deep'){
@@ -882,9 +889,14 @@ function initScene(t){
       sP.push({T:'s',x:cx,y:cy,r:Math.random()*.5+.2,a:Math.random()*.35+.15,o:Math.random()*1e3,v:.0005+Math.random()*.001,c:'220,225,255'});
     }
     // sparkle stars — bright twinkling with cross rays
-    for(let i=0;i<20;i++){
+    for(let i=0;i<35;i++){
       const colors=['255,255,255','240,248,255','255,250,230','220,235,255'];
-      sP.push({T:'sp',x:Math.random()*W,y:Math.random()*H,r:Math.random()*.4+.5,a:Math.random()*.5+.35,o:Math.random()*1e3,v:.001+Math.random()*.004,c:colors[Math.floor(Math.random()*colors.length)]});
+      sP.push({T:'sp',x:Math.random()*W,y:Math.random()*H,r:Math.random()*.5+.5,a:Math.random()*.55+.38,o:Math.random()*1e3,v:.0015+Math.random()*.005,c:colors[Math.floor(Math.random()*colors.length)]});
+    }
+    // pulse stars — slow breathing halo
+    for(let i=0;i<12;i++){
+      const colors=['255,255,255','245,250,255','255,245,235'];
+      sP.push({T:'pu',x:Math.random()*W,y:Math.random()*H,r:Math.random()*.5+.7,a:Math.random()*.4+.45,o:Math.random()*1e3,v:.0004+Math.random()*.0008,c:colors[Math.floor(Math.random()*colors.length)]});
     }
   }
   if(s==='ocean'){for(let i=0;i<3;i++)sP.push({T:'wl',y:H*(.42+i*.04),a:.05-.01*i,v:.0008+i*.0003,amp:8+i*4,o:i*50,c:`100,${200-i*15},${230-i*10}`});for(let i=0;i<80;i++)sP.push({T:'w',x:Math.random()*W,y:H*.4+Math.random()*H*.6,r:Math.random()*1.5+.3,a:Math.random()*.15+.03,o:Math.random()*1e3,sx:Math.random()*.2-.1})}
@@ -901,7 +913,8 @@ function draw(t){
   const W=cv.width,H=cv.height;lt=t;cx.clearRect(0,0,W,H);
   sP.forEach(p=>{
     if(p.T==='s'){cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=`rgba(${p.c},${p.a*(.5+.5*Math.sin(t*p.v+p.o))})`;cx.fill()}
-    else if(p.T==='sp'){const f=.5+.5*Math.sin(t*p.v+p.o);const a=p.a*f;cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=`rgba(${p.c},${a})`;cx.fill();if(a>.25){const rl=p.r*5*f;cx.beginPath();cx.moveTo(p.x-rl,p.y);cx.lineTo(p.x+rl,p.y);cx.moveTo(p.x,p.y-rl);cx.lineTo(p.x,p.y+rl);cx.strokeStyle=`rgba(${p.c},${a*.2})`;cx.lineWidth=.4;cx.stroke()}}
+    else if(p.T==='sp'){const f=.5+.5*Math.sin(t*p.v+p.o);const a=p.a*f;cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=`rgba(${p.c},${a})`;cx.fill();if(a>.2){const rl=p.r*6*f;const rd=p.r*3.5*f;cx.beginPath();cx.moveTo(p.x-rl,p.y);cx.lineTo(p.x+rl,p.y);cx.moveTo(p.x,p.y-rl);cx.lineTo(p.x,p.y+rl);cx.strokeStyle=`rgba(${p.c},${a*.28})`;cx.lineWidth=.5;cx.stroke();cx.beginPath();cx.moveTo(p.x-rd,p.y-rd);cx.lineTo(p.x+rd,p.y+rd);cx.moveTo(p.x+rd,p.y-rd);cx.lineTo(p.x-rd,p.y+rd);cx.strokeStyle=`rgba(${p.c},${a*.1})`;cx.lineWidth=.3;cx.stroke();const hg=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3);hg.addColorStop(0,`rgba(${p.c},${a*.18})`);hg.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.arc(p.x,p.y,p.r*3,0,Math.PI*2);cx.fillStyle=hg;cx.fill()}}
+    else if(p.T==='pu'){const pf=.3+.7*(.5+.5*Math.sin(t*p.v+p.o));const pa=p.a*pf;const hg=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*5);hg.addColorStop(0,`rgba(${p.c},${pa*.22})`);hg.addColorStop(.4,`rgba(${p.c},${pa*.06})`);hg.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.arc(p.x,p.y,p.r*5,0,Math.PI*2);cx.fillStyle=hg;cx.fill();cx.beginPath();cx.arc(p.x,p.y,p.r*(1+pf*.3),0,Math.PI*2);cx.fillStyle=`rgba(${p.c},${pa})`;cx.fill()}
     else if(p.T==='nb'){const a=p.a*(.5+.5*Math.sin(t*.00015+p.o));const g=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);g.addColorStop(0,`rgba(${p.c},${a})`);g.addColorStop(.5,`rgba(${p.c},${a*.5})`);g.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=g;cx.fill()}
     else if(p.T==='mw'){const a=p.a*(.6+.4*Math.sin(t*.0001+p.o));cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);const g=cx.createRadialGradient(0,0,0,0,0,Math.max(p.rx,p.ry));g.addColorStop(0,`rgba(${p.c},${a})`);g.addColorStop(.4,`rgba(${p.c},${a*.5})`);g.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.ellipse(0,0,p.rx,p.ry,0,0,Math.PI*2);cx.fillStyle=g;cx.fill();cx.restore()}
     else if(p.T==='wl'){cx.beginPath();const a=p.a*(.5+.5*Math.sin(t*.0003+p.o));for(let x=0;x<=W;x+=4){const y=p.y+Math.sin(x*.008+t*p.v+p.o)*p.amp;x?cx.lineTo(x,y):cx.moveTo(x,y)}cx.strokeStyle=`rgba(${p.c},${a})`;cx.lineWidth=.7;cx.stroke()}
@@ -917,7 +930,7 @@ function draw(t){
   });
   const theme=getTheme();
   if(theme&&(theme.scene==='cosmos'||theme.scene==='deep'||theme.scene==='sand')){
-    if(Math.random()<.005)sS.push({x:Math.random()*W,y:Math.random()*H*.4,len:40+Math.random()*70,sp:3+Math.random()*5,ang:Math.PI/6+Math.random()*.35,life:1,w:.5+Math.random()*.8});
+    if(Math.random()<.012)sS.push({x:Math.random()*W,y:Math.random()*H*.4,len:45+Math.random()*80,sp:3+Math.random()*6,ang:Math.PI/6+Math.random()*.35,life:1,w:.6+Math.random()*1});
     const tc=theme.sc||'220,225,240';
     sS=sS.filter(s=>{s.x+=Math.cos(s.ang)*s.sp;s.y+=Math.sin(s.ang)*s.sp;s.life-=.012;if(s.life<=0)return false;const g=cx.createLinearGradient(s.x,s.y,s.x-Math.cos(s.ang)*s.len,s.y-Math.sin(s.ang)*s.len);g.addColorStop(0,`rgba(${tc},${s.life})`);g.addColorStop(1,`rgba(${tc},0)`);cx.beginPath();cx.moveTo(s.x,s.y);cx.lineTo(s.x-Math.cos(s.ang)*s.len,s.y-Math.sin(s.ang)*s.len);cx.strokeStyle=g;cx.lineWidth=s.w;cx.stroke();return true});
   }
