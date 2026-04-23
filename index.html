@@ -28,6 +28,19 @@ body{font-family:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Helvetica Ne
 #solar{position:fixed;inset:0;z-index:50;background:#050508;transition:opacity .8s}
 #solar.off{opacity:0;pointer-events:none;z-index:-1}
 #solarC{width:100%;height:100%}
+
+/* SOLAR TITLE — 极淡极细顶部标题 */
+.stitle{position:fixed;top:calc(1.6rem + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:56;font-size:.7rem;font-weight:200;letter-spacing:.42em;color:rgba(230,230,240,.32);text-shadow:0 0 16px rgba(140,160,220,.12);white-space:nowrap;pointer-events:none;user-select:none;opacity:0;animation:stFade 1.6s ease 1.8s forwards;transition:opacity .6s ease}
+.stitle .st-dot{display:inline-block;margin:0 .55em;color:rgba(230,230,240,.22);font-weight:300}
+@keyframes stFade{to{opacity:1}}
+#solar.off ~ .stitle{opacity:0;pointer-events:none}
+@media(max-width:640px){
+  .stitle{font-size:.6rem;letter-spacing:.34em;top:calc(1.1rem + env(safe-area-inset-top,0px))}
+  .stitle .st-dot{margin:0 .4em}
+}
+@media(max-width:380px){
+  .stitle{font-size:.55rem;letter-spacing:.28em}
+}
 .pnav{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);z-index:55;display:flex;gap:.25rem;padding:.35rem .5rem;background:rgba(10,10,20,.8);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.06);border-radius:14px}
 .pnav.hide{display:none}
 .pnav-btn{display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.3rem .45rem;border-radius:8px;border:1.5px solid transparent;background:none;cursor:pointer;transition:all .3s var(--ease);min-width:36px}
@@ -264,6 +277,7 @@ body{font-family:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Helvetica Ne
 <body>
 <div class="intro" id="intro"><canvas id="introC"></canvas><div class="intro-txt" id="iTxt">启航，飞向星辰</div></div>
 <div id="solar"><canvas id="solarC"></canvas></div>
+<div class="stitle" id="stitle">宇宙坐标<span class="st-dot">·</span>星星的小破站</div>
 <div class="pnav" id="pnav"></div>
 <div class="pi" id="pi"><div class="pi-box"><div class="pi-n" id="piN"></div><div class="pi-d" id="piD"></div><div class="pi-h" id="piH">点击登船 →</div></div></div>
 <div class="ptrans" id="ptrans"><div class="ring" id="ptRing"></div></div>
