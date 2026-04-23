@@ -1,0 +1,16 @@
+{
+  "envId": "xingxingdexiaopozhan-d3acdbae4a3",
+  "version": "2.0",
+  "framework": {
+    "name": "static",
+    "plugins": {
+      "client": {
+        "use": "@cloudbase/framework-plugin-website",
+        "inputs": {
+          "outputPath": ".",
+          "ignore": [".git", ".cloudbaserc.json", "部署指南.md", ".gitignore", "node_modules"]
+        }
+      }
+    }
+  }
+}
