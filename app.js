@@ -208,21 +208,21 @@ let sW,sH,sCx,sCy,sScale=1,sStars=[],sNebulae=[],sGalaxies=[],hov=null,pPos=[];
 function rSolar(){
   sW=sc.width=innerWidth;sH=sc.height=innerHeight;sCx=sW/2;sCy=sH/2;
   sScale=Math.min(sW/900,sH/800,1.2);if(sScale<.45)sScale=.45;
-  // multi-layer stars — bigger, brighter, visible at a glance
+  // multi-layer stars — MAX VISIBILITY mode
   sStars=[];
   const area=sW*sH;
   const dens=area/1e6;
-  const N1=Math.round(650*dens), N2=Math.round(320*dens), N3=Math.round(180*dens), N4=Math.round(140*dens), N5=Math.round(45*dens);
-  // Layer 1: background dust — visible baseline brightness, never fades below 25%
-  for(let i=0;i<N1;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.6+.3,a:Math.random()*.25+.3,o:Math.random()*1e3,s:.0004+Math.random()*.0008,c:'200,210,230',sp:0,amp:.35});
-  // Layer 2: mid stars — solid presence
-  for(let i=0;i<N2;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.0+.5,a:Math.random()*.3+.45,o:Math.random()*1e3,s:.0008+Math.random()*.0015,c:'220,230,250',sp:0,amp:.4});
+  const N1=Math.round(550*dens), N2=Math.round(280*dens), N3=Math.round(160*dens), N4=Math.round(120*dens), N5=Math.round(55*dens);
+  // Layer 1: background dust — bright baseline, every dot visible
+  for(let i=0;i<N1;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.8+.6,a:Math.random()*.2+.55,o:Math.random()*1e3,s:.0004+Math.random()*.0008,c:'210,220,240',sp:0,amp:.3});
+  // Layer 2: mid stars — solid obvious presence
+  for(let i=0;i<N2;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.3+.9,a:Math.random()*.25+.7,o:Math.random()*1e3,s:.0008+Math.random()*.0015,c:'230,238,255',sp:0,amp:.35});
   // Layer 3: bright colored stars
-  for(let i=0;i<N3;i++){const colors=['235,245,255','255,240,200','215,230,255','255,210,175','195,225,255','255,225,210','255,195,180'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.1+.8,a:Math.random()*.35+.6,o:Math.random()*1e3,s:.0012+Math.random()*.003,c:colors[Math.floor(Math.random()*colors.length)],sp:0,amp:.45})}
-  // Layer 4: sparkle stars — big, bright, cross rays
-  for(let i=0;i<N4;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*.9+1.1,a:Math.random()*.3+.7,o:Math.random()*1e3,s:.002+Math.random()*.007,c:colors[Math.floor(Math.random()*colors.length)],sp:1,amp:.5})}
-  // Layer 5: pulse stars — hero stars with big halo
-  for(let i=0;i<N5;i++){const colors=['255,255,255','245,250,255','255,245,235','255,240,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1+1.4,a:Math.random()*.25+.75,o:Math.random()*1e3,s:.0005+Math.random()*.001,c:colors[Math.floor(Math.random()*colors.length)],sp:2,amp:.5})}
+  for(let i=0;i<N3;i++){const colors=['240,248,255','255,238,190','220,232,255','255,205,170','200,228,255','255,220,205','255,190,175'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.5+1.3,a:Math.random()*.25+.8,o:Math.random()*1e3,s:.0012+Math.random()*.003,c:colors[Math.floor(Math.random()*colors.length)],sp:0,amp:.4})}
+  // Layer 4: sparkle stars — BIG bright cross rays
+  for(let i=0;i<N4;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.2+1.8,a:Math.random()*.2+.85,o:Math.random()*1e3,s:.002+Math.random()*.007,c:colors[Math.floor(Math.random()*colors.length)],sp:1,amp:.45})}
+  // Layer 5: pulse stars — hero stars, huge halo
+  for(let i=0;i<N5;i++){const colors=['255,255,255','245,250,255','255,245,235','255,240,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.4+2.2,a:Math.random()*.15+.9,o:Math.random()*1e3,s:.0005+Math.random()*.001,c:colors[Math.floor(Math.random()*colors.length)],sp:2,amp:.4})}
   // nebulae / cosmic clouds
   sNebulae=[];
   sNebulae.push({x:sW*.15,y:sH*.2,rx:sW*.18,ry:sH*.12,c:'60,30,100',a:.04,rot:.2});
@@ -280,24 +280,26 @@ function dSolar(t){
     sx.restore();
   });
 
-  // stars — every star gets a soft glow so they read as light sources, not dots
+  // stars — MAX GLOW: bigger halo, stronger core, always visible
   sx.save();sx.globalCompositeOperation='lighter';
   sStars.forEach(s=>{
     const amp=s.amp||.4;
-    const f=(1-amp)+amp*(.5+.5*Math.sin(t*s.s+s.o)); // e.g. .55..1 never goes dark
+    const f=(1-amp)+amp*(.5+.5*Math.sin(t*s.s+s.o));
     const a=Math.min(1,s.a*f);
-    // base halo for every star — creates the "glow" feeling
-    const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3.5);
-    hg.addColorStop(0,`rgba(${s.c},${a*.45})`);
-    hg.addColorStop(.5,`rgba(${s.c},${a*.12})`);
+    // base halo — much bigger (6x) and brighter center
+    const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*6);
+    hg.addColorStop(0,`rgba(${s.c},${a*.85})`);
+    hg.addColorStop(.3,`rgba(${s.c},${a*.3})`);
+    hg.addColorStop(.7,`rgba(${s.c},${a*.08})`);
     hg.addColorStop(1,`rgba(${s.c},0)`);
-    sx.beginPath();sx.arc(s.x,s.y,s.r*3.5,0,Math.PI*2);sx.fillStyle=hg;sx.fill();
-    // core
-    sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${a})`;sx.fill();
-    // sparkle: cross rays (8-way)
-    if(s.sp===1&&a>.35){const rl=s.r*7*f;const rd=s.r*4.5*f;sx.beginPath();sx.moveTo(s.x-rl,s.y);sx.lineTo(s.x+rl,s.y);sx.moveTo(s.x,s.y-rl);sx.lineTo(s.x,s.y+rl);sx.strokeStyle=`rgba(${s.c},${a*.55})`;sx.lineWidth=.7;sx.stroke();sx.beginPath();sx.moveTo(s.x-rd,s.y-rd);sx.lineTo(s.x+rd,s.y+rd);sx.moveTo(s.x+rd,s.y-rd);sx.lineTo(s.x-rd,s.y+rd);sx.strokeStyle=`rgba(${s.c},${a*.25})`;sx.lineWidth=.5;sx.stroke()}
-    // pulse: extra big breathing halo
-    if(s.sp===2){const pf=.4+.6*(.5+.5*Math.sin(t*s.s+s.o));const pa=s.a*pf;const hg2=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*7);hg2.addColorStop(0,`rgba(${s.c},${pa*.35})`);hg2.addColorStop(.4,`rgba(${s.c},${pa*.12})`);hg2.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*7,0,Math.PI*2);sx.fillStyle=hg2;sx.fill()}
+    sx.beginPath();sx.arc(s.x,s.y,s.r*6,0,Math.PI*2);sx.fillStyle=hg;sx.fill();
+    // bright core — double draw for punch
+    sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${Math.min(1,a*1.2)})`;sx.fill();
+    sx.beginPath();sx.arc(s.x,s.y,s.r*.5,0,Math.PI*2);sx.fillStyle=`rgba(255,255,255,${a*.9})`;sx.fill();
+    // sparkle: cross rays (8-way, longer + brighter)
+    if(s.sp===1){const rl=s.r*10*f;const rd=s.r*6.5*f;sx.beginPath();sx.moveTo(s.x-rl,s.y);sx.lineTo(s.x+rl,s.y);sx.moveTo(s.x,s.y-rl);sx.lineTo(s.x,s.y+rl);sx.strokeStyle=`rgba(${s.c},${a*.75})`;sx.lineWidth=1.0;sx.stroke();sx.beginPath();sx.moveTo(s.x-rd,s.y-rd);sx.lineTo(s.x+rd,s.y+rd);sx.moveTo(s.x+rd,s.y-rd);sx.lineTo(s.x-rd,s.y+rd);sx.strokeStyle=`rgba(${s.c},${a*.4})`;sx.lineWidth=.7;sx.stroke()}
+    // pulse: huge breathing halo
+    if(s.sp===2){const pf=.4+.6*(.5+.5*Math.sin(t*s.s+s.o));const pa=s.a*pf;const hg2=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*12);hg2.addColorStop(0,`rgba(${s.c},${pa*.5})`);hg2.addColorStop(.35,`rgba(${s.c},${pa*.18})`);hg2.addColorStop(.7,`rgba(${s.c},${pa*.05})`);hg2.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*12,0,Math.PI*2);sx.fillStyle=hg2;sx.fill()}
   });
   sx.restore();
 
@@ -882,8 +884,8 @@ function initScene(t){
   for(let i=0;i<starN;i++){
     const colors=s==='cosmos'||s==='deep'?['200,210,240','230,235,255','255,240,210','180,200,240','255,220,180','220,240,255']:[tc];
     const c=colors[Math.floor(Math.random()*colors.length)];
-    const bright=s==='cosmos'||s==='deep'?Math.random()*.6+.15:Math.random()*.35+.08;
-    sP.push({T:'s',x:Math.random()*W,y:Math.random()*starH,r:Math.random()*(s==='cosmos'?1.1:.85)+.15,a:bright,o:Math.random()*1e3,v:.0004+Math.random()*.0012,c});
+    const bright=s==='cosmos'||s==='deep'?Math.random()*.3+.6:Math.random()*.35+.4;
+    sP.push({T:'s',x:Math.random()*W,y:Math.random()*starH,r:Math.random()*(s==='cosmos'?1.6:1.2)+.6,a:bright,o:Math.random()*1e3,v:.0004+Math.random()*.0012,c});
   }
   // cosmos/deep: rich nebulae + milky way
   if(s==='cosmos'||s==='deep'){
@@ -909,12 +911,12 @@ function initScene(t){
     const spN=Math.round(80*dens), puN=Math.round(28*dens);
     for(let i=0;i<spN;i++){
       const colors=['255,255,255','240,248,255','255,250,230','220,235,255'];
-      sP.push({T:'sp',x:Math.random()*W,y:Math.random()*H,r:Math.random()*.55+.6,a:Math.random()*.6+.45,o:Math.random()*1e3,v:.0018+Math.random()*.006,c:colors[Math.floor(Math.random()*colors.length)]});
+      sP.push({T:'sp',x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+1.8,a:Math.random()*.2+.85,o:Math.random()*1e3,v:.0018+Math.random()*.006,c:colors[Math.floor(Math.random()*colors.length)]});
     }
     // pulse stars — slow breathing halo
     for(let i=0;i<puN;i++){
       const colors=['255,255,255','245,250,255','255,245,235'];
-      sP.push({T:'pu',x:Math.random()*W,y:Math.random()*H,r:Math.random()*.55+.85,a:Math.random()*.4+.55,o:Math.random()*1e3,v:.0004+Math.random()*.0009,c:colors[Math.floor(Math.random()*colors.length)]});
+      sP.push({T:'pu',x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+2.2,a:Math.random()*.15+.9,o:Math.random()*1e3,v:.0004+Math.random()*.0009,c:colors[Math.floor(Math.random()*colors.length)]});
     }
   }
   if(s==='ocean'){for(let i=0;i<3;i++)sP.push({T:'wl',y:H*(.42+i*.04),a:.05-.01*i,v:.0008+i*.0003,amp:8+i*4,o:i*50,c:`100,${200-i*15},${230-i*10}`});for(let i=0;i<80;i++)sP.push({T:'w',x:Math.random()*W,y:H*.4+Math.random()*H*.6,r:Math.random()*1.5+.3,a:Math.random()*.15+.03,o:Math.random()*1e3,sx:Math.random()*.2-.1})}
@@ -930,9 +932,9 @@ function initScene(t){
 function draw(t){
   const W=cv.width,H=cv.height;lt=t;cx.clearRect(0,0,W,H);
   sP.forEach(p=>{
-    if(p.T==='s'){cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=`rgba(${p.c},${p.a*(.5+.5*Math.sin(t*p.v+p.o))})`;cx.fill()}
-    else if(p.T==='sp'){const f=.5+.5*Math.sin(t*p.v+p.o);const a=p.a*f;cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=`rgba(${p.c},${a})`;cx.fill();if(a>.2){const rl=p.r*6*f;const rd=p.r*3.5*f;cx.beginPath();cx.moveTo(p.x-rl,p.y);cx.lineTo(p.x+rl,p.y);cx.moveTo(p.x,p.y-rl);cx.lineTo(p.x,p.y+rl);cx.strokeStyle=`rgba(${p.c},${a*.28})`;cx.lineWidth=.5;cx.stroke();cx.beginPath();cx.moveTo(p.x-rd,p.y-rd);cx.lineTo(p.x+rd,p.y+rd);cx.moveTo(p.x+rd,p.y-rd);cx.lineTo(p.x-rd,p.y+rd);cx.strokeStyle=`rgba(${p.c},${a*.1})`;cx.lineWidth=.3;cx.stroke();const hg=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*3);hg.addColorStop(0,`rgba(${p.c},${a*.18})`);hg.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.arc(p.x,p.y,p.r*3,0,Math.PI*2);cx.fillStyle=hg;cx.fill()}}
-    else if(p.T==='pu'){const pf=.3+.7*(.5+.5*Math.sin(t*p.v+p.o));const pa=p.a*pf;const hg=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*5);hg.addColorStop(0,`rgba(${p.c},${pa*.22})`);hg.addColorStop(.4,`rgba(${p.c},${pa*.06})`);hg.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.arc(p.x,p.y,p.r*5,0,Math.PI*2);cx.fillStyle=hg;cx.fill();cx.beginPath();cx.arc(p.x,p.y,p.r*(1+pf*.3),0,Math.PI*2);cx.fillStyle=`rgba(${p.c},${pa})`;cx.fill()}
+    if(p.T==='s'){const f=.4+.6*(.5+.5*Math.sin(t*p.v+p.o));const a=Math.min(1,p.a*f);cx.save();cx.globalCompositeOperation='lighter';const hg=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*6);hg.addColorStop(0,`rgba(${p.c},${a*.7})`);hg.addColorStop(.3,`rgba(${p.c},${a*.25})`);hg.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.arc(p.x,p.y,p.r*6,0,Math.PI*2);cx.fillStyle=hg;cx.fill();cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=`rgba(${p.c},${a})`;cx.fill();cx.beginPath();cx.arc(p.x,p.y,p.r*.5,0,Math.PI*2);cx.fillStyle=`rgba(255,255,255,${a*.85})`;cx.fill();cx.restore()}
+    else if(p.T==='sp'){cx.save();cx.globalCompositeOperation='lighter';const f=.4+.6*(.5+.5*Math.sin(t*p.v+p.o));const a=Math.min(1,p.a*f);const hg0=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*6);hg0.addColorStop(0,`rgba(${p.c},${a*.85})`);hg0.addColorStop(.35,`rgba(${p.c},${a*.3})`);hg0.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.arc(p.x,p.y,p.r*6,0,Math.PI*2);cx.fillStyle=hg0;cx.fill();cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=`rgba(${p.c},${a})`;cx.fill();cx.beginPath();cx.arc(p.x,p.y,p.r*.5,0,Math.PI*2);cx.fillStyle=`rgba(255,255,255,${a*.9})`;cx.fill();const rl=p.r*10*f;const rd=p.r*6.5*f;cx.beginPath();cx.moveTo(p.x-rl,p.y);cx.lineTo(p.x+rl,p.y);cx.moveTo(p.x,p.y-rl);cx.lineTo(p.x,p.y+rl);cx.strokeStyle=`rgba(${p.c},${a*.7})`;cx.lineWidth=1.0;cx.stroke();cx.beginPath();cx.moveTo(p.x-rd,p.y-rd);cx.lineTo(p.x+rd,p.y+rd);cx.moveTo(p.x+rd,p.y-rd);cx.lineTo(p.x-rd,p.y+rd);cx.strokeStyle=`rgba(${p.c},${a*.35})`;cx.lineWidth=.7;cx.stroke();cx.restore()}
+    else if(p.T==='pu'){cx.save();cx.globalCompositeOperation='lighter';const pf=.4+.6*(.5+.5*Math.sin(t*p.v+p.o));const pa=Math.min(1,p.a*pf);const hg=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*12);hg.addColorStop(0,`rgba(${p.c},${pa*.5})`);hg.addColorStop(.35,`rgba(${p.c},${pa*.18})`);hg.addColorStop(.7,`rgba(${p.c},${pa*.05})`);hg.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.arc(p.x,p.y,p.r*12,0,Math.PI*2);cx.fillStyle=hg;cx.fill();cx.beginPath();cx.arc(p.x,p.y,p.r*(1+pf*.3),0,Math.PI*2);cx.fillStyle=`rgba(${p.c},${pa})`;cx.fill();cx.beginPath();cx.arc(p.x,p.y,p.r*.5,0,Math.PI*2);cx.fillStyle=`rgba(255,255,255,${pa*.9})`;cx.fill();cx.restore()}
     else if(p.T==='nb'){const a=p.a*(.5+.5*Math.sin(t*.00015+p.o));const g=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);g.addColorStop(0,`rgba(${p.c},${a})`);g.addColorStop(.5,`rgba(${p.c},${a*.5})`);g.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=g;cx.fill()}
     else if(p.T==='mw'){const a=p.a*(.6+.4*Math.sin(t*.0001+p.o));cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);const g=cx.createRadialGradient(0,0,0,0,0,Math.max(p.rx,p.ry));g.addColorStop(0,`rgba(${p.c},${a})`);g.addColorStop(.4,`rgba(${p.c},${a*.5})`);g.addColorStop(1,`rgba(${p.c},0)`);cx.beginPath();cx.ellipse(0,0,p.rx,p.ry,0,0,Math.PI*2);cx.fillStyle=g;cx.fill();cx.restore()}
     else if(p.T==='wl'){cx.beginPath();const a=p.a*(.5+.5*Math.sin(t*.0003+p.o));for(let x=0;x<=W;x+=4){const y=p.y+Math.sin(x*.008+t*p.v+p.o)*p.amp;x?cx.lineTo(x,y):cx.moveTo(x,y)}cx.strokeStyle=`rgba(${p.c},${a})`;cx.lineWidth=.7;cx.stroke()}
