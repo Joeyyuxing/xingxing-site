@@ -212,7 +212,7 @@ function rSolar(){
   sStars=[];
   const area=sW*sH;
   const dens=area/1e6;
-  const N1=Math.round(1800*dens), N2=Math.round(900*dens), N3=Math.round(500*dens), N4=Math.round(320*dens), N5=Math.round(140*dens);
+  const N1=Math.round(14400*dens), N2=Math.round(7200*dens), N3=Math.round(4000*dens), N4=Math.round(2560*dens), N5=Math.round(1120*dens);
   // Layer 1: background dust — never dim, always visible
   for(let i=0;i<N1;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.0+.9,a:Math.random()*.15+.75,o:Math.random()*1e3,s:.0004+Math.random()*.0008,c:'220,230,250',sp:0,amp:.2});
   // Layer 2: mid stars — strong presence
