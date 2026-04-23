@@ -879,44 +879,44 @@ let sP=[],sS=[],lt=0;
 function initScene(t){
   if(!t)return;const s=t.scene,W=cv.width,H=cv.height,tc=t.sc||'220,225,240';sP=[];sS=[];
   const dens=(W*H)/1e6;
-  const starN=s==='cosmos'||s==='deep'?Math.round(850*dens):s==='ocean'||s==='snow'||s==='forest'?Math.round(120*dens):s==='sand'||s==='city'?Math.round(80*dens):Math.round(350*dens);
+  const starN=s==='cosmos'||s==='deep'?Math.round(2200*dens):s==='ocean'||s==='snow'||s==='forest'?Math.round(120*dens):s==='sand'||s==='city'?Math.round(80*dens):Math.round(350*dens);
   const starH=s==='ocean'?H*.4:s==='forest'?H*.3:H;
   for(let i=0;i<starN;i++){
-    const colors=s==='cosmos'||s==='deep'?['200,210,240','230,235,255','255,240,210','180,200,240','255,220,180','220,240,255']:[tc];
+    const colors=s==='cosmos'||s==='deep'?['220,230,255','240,245,255','255,245,220','200,220,255','255,225,190','230,245,255','255,200,180']:[tc];
     const c=colors[Math.floor(Math.random()*colors.length)];
-    const bright=s==='cosmos'||s==='deep'?Math.random()*.3+.6:Math.random()*.35+.4;
-    sP.push({T:'s',x:Math.random()*W,y:Math.random()*starH,r:Math.random()*(s==='cosmos'?1.6:1.2)+.6,a:bright,o:Math.random()*1e3,v:.0004+Math.random()*.0012,c});
+    const bright=s==='cosmos'||s==='deep'?Math.random()*.25+.72:Math.random()*.35+.4;
+    sP.push({T:'s',x:Math.random()*W,y:Math.random()*starH,r:Math.random()*(s==='cosmos'?2.0:1.2)+.9,a:bright,o:Math.random()*1e3,v:.0004+Math.random()*.0012,c});
   }
   // cosmos/deep: rich nebulae + milky way
   if(s==='cosmos'||s==='deep'){
-    // large nebulae (visible colorful clouds)
-    const nebColors=['80,50,150','60,40,130','40,60,140','100,40,120','50,70,150','70,30,110','90,60,140'];
-    for(let i=0;i<8;i++){
+    // large nebulae — brighter, more saturated
+    const nebColors=['120,70,200','90,60,180','60,90,200','150,60,170','80,100,200','110,40,150','130,80,190'];
+    for(let i=0;i<12;i++){
       const nc=nebColors[i%nebColors.length];
-      sP.push({T:'nb',x:Math.random()*W,y:Math.random()*H,r:80+Math.random()*150,a:.025+Math.random()*.03,c:nc,o:Math.random()*1e3});
+      sP.push({T:'nb',x:Math.random()*W,y:Math.random()*H,r:100+Math.random()*180,a:.06+Math.random()*.06,c:nc,o:Math.random()*1e3});
     }
-    // milky way band — a series of overlapping soft ellipses on a diagonal
-    for(let i=0;i<6;i++){
-      const mx=W*(.15+i*.13)+Math.random()*40;
-      const my=H*(.75-.08*i)+Math.random()*30;
-      sP.push({T:'mw',x:mx,y:my,rx:60+Math.random()*80,ry:20+Math.random()*15,rot:-.45+Math.random()*.1,a:.02+Math.random()*.015,c:`${55+Math.random()*30|0},${45+Math.random()*25|0},${85+Math.random()*30|0}`,o:Math.random()*1e3});
+    // milky way band — brighter overlapping soft ellipses
+    for(let i=0;i<8;i++){
+      const mx=W*(.1+i*.1)+Math.random()*40;
+      const my=H*(.8-.08*i)+Math.random()*30;
+      sP.push({T:'mw',x:mx,y:my,rx:70+Math.random()*90,ry:25+Math.random()*20,rot:-.45+Math.random()*.1,a:.05+Math.random()*.04,c:`${80+Math.random()*40|0},${70+Math.random()*30|0},${130+Math.random()*40|0}`,o:Math.random()*1e3});
     }
-    // bright star clusters near milky way
-    for(let i=0;i<30;i++){
-      const cx=W*(.15+Math.random()*.7);
-      const cy=H*(.5+(.5-cx/W)*.5)+Math.random()*40-20; // follow diagonal
-      sP.push({T:'s',x:cx,y:cy,r:Math.random()*.5+.2,a:Math.random()*.35+.15,o:Math.random()*1e3,v:.0005+Math.random()*.001,c:'220,225,255'});
+    // bright star clusters along milky way — brighter now
+    for(let i=0;i<80;i++){
+      const cx=W*(.1+Math.random()*.8);
+      const cy=H*(.5+(.5-cx/W)*.5)+Math.random()*60-30;
+      sP.push({T:'s',x:cx,y:cy,r:Math.random()*1.0+.6,a:Math.random()*.3+.55,o:Math.random()*1e3,v:.0005+Math.random()*.001,c:'235,240,255'});
     }
-    // sparkle stars — bright twinkling with cross rays
-    const spN=Math.round(80*dens), puN=Math.round(28*dens);
+    // sparkle stars — BIG MASSIVE count
+    const spN=Math.round(280*dens), puN=Math.round(90*dens);
     for(let i=0;i<spN;i++){
-      const colors=['255,255,255','240,248,255','255,250,230','220,235,255'];
-      sP.push({T:'sp',x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+1.8,a:Math.random()*.2+.85,o:Math.random()*1e3,v:.0018+Math.random()*.006,c:colors[Math.floor(Math.random()*colors.length)]});
+      const colors=['255,255,255','240,248,255','255,250,230','220,235,255','255,230,200'];
+      sP.push({T:'sp',x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+2.2,a:Math.random()*.15+.9,o:Math.random()*1e3,v:.0018+Math.random()*.006,c:colors[Math.floor(Math.random()*colors.length)]});
     }
-    // pulse stars — slow breathing halo
+    // pulse stars — hero stars, huge halo
     for(let i=0;i<puN;i++){
-      const colors=['255,255,255','245,250,255','255,245,235'];
-      sP.push({T:'pu',x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+2.2,a:Math.random()*.15+.9,o:Math.random()*1e3,v:.0004+Math.random()*.0009,c:colors[Math.floor(Math.random()*colors.length)]});
+      const colors=['255,255,255','245,250,255','255,245,235','255,230,200'];
+      sP.push({T:'pu',x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+2.8,a:Math.random()*.1+.95,o:Math.random()*1e3,v:.0004+Math.random()*.0009,c:colors[Math.floor(Math.random()*colors.length)]});
     }
   }
   if(s==='ocean'){for(let i=0;i<3;i++)sP.push({T:'wl',y:H*(.42+i*.04),a:.05-.01*i,v:.0008+i*.0003,amp:8+i*4,o:i*50,c:`100,${200-i*15},${230-i*10}`});for(let i=0;i<80;i++)sP.push({T:'w',x:Math.random()*W,y:H*.4+Math.random()*H*.6,r:Math.random()*1.5+.3,a:Math.random()*.15+.03,o:Math.random()*1e3,sx:Math.random()*.2-.1})}
