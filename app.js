@@ -214,15 +214,15 @@ function rSolar(){
   const dens=area/1e6;
   const N1=Math.round(14400*dens), N2=Math.round(7200*dens), N3=Math.round(4000*dens), N4=Math.round(2560*dens), N5=Math.round(1120*dens);
   // Layer 1: background dust — never dim, always visible
-  for(let i=0;i<N1;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.0+.9,a:Math.random()*.15+.75,o:Math.random()*1e3,s:.0004+Math.random()*.0008,c:'220,230,250',sp:0,amp:.2});
+  for(let i=0;i<N1;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.4+1.3,a:Math.random()*.15+.8,o:Math.random()*1e3,s:.0004+Math.random()*.0008,c:'220,230,250',sp:0,amp:.2});
   // Layer 2: mid stars — strong presence
-  for(let i=0;i<N2;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.6+1.3,a:Math.random()*.15+.85,o:Math.random()*1e3,s:.0008+Math.random()*.0015,c:'235,243,255',sp:0,amp:.25});
+  for(let i=0;i<N2;i++)sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*2.2+1.9,a:Math.random()*.1+.9,o:Math.random()*1e3,s:.0008+Math.random()*.0015,c:'235,243,255',sp:0,amp:.2});
   // Layer 3: bright colored stars
-  for(let i=0;i<N3;i++){const colors=['245,250,255','255,238,190','225,237,255','255,205,170','205,230,255','255,220,205','255,190,175','255,240,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.8+1.8,a:Math.random()*.15+.9,o:Math.random()*1e3,s:.0012+Math.random()*.003,c:colors[Math.floor(Math.random()*colors.length)],sp:0,amp:.3})}
+  for(let i=0;i<N3;i++){const colors=['245,250,255','255,238,190','225,237,255','255,205,170','205,230,255','255,220,205','255,190,175','255,240,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*2.6+2.6,a:Math.random()*.1+.92,o:Math.random()*1e3,s:.0012+Math.random()*.003,c:colors[Math.floor(Math.random()*colors.length)],sp:0,amp:.25})}
   // Layer 4: sparkle stars — HUGE bright cross rays
-  for(let i=0;i<N4;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.5+2.5,a:Math.random()*.1+.95,o:Math.random()*1e3,s:.002+Math.random()*.007,c:colors[Math.floor(Math.random()*colors.length)],sp:1,amp:.35})}
+  for(let i=0;i<N4;i++){const colors=['255,255,255','240,248,255','255,250,230','220,240,255'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*2.3+3.8,a:Math.random()*.08+.96,o:Math.random()*1e3,s:.002+Math.random()*.007,c:colors[Math.floor(Math.random()*colors.length)],sp:1,amp:.3})}
   // Layer 5: pulse hero stars — massive halo
-  for(let i=0;i<N5;i++){const colors=['255,255,255','245,250,255','255,245,235','255,240,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*1.8+3.2,a:1,o:Math.random()*1e3,s:.0005+Math.random()*.001,c:colors[Math.floor(Math.random()*colors.length)],sp:2,amp:.3})}
+  for(let i=0;i<N5;i++){const colors=['255,255,255','245,250,255','255,245,235','255,240,220'];sStars.push({x:Math.random()*sW,y:Math.random()*sH,r:Math.random()*2.8+4.8,a:1,o:Math.random()*1e3,s:.0005+Math.random()*.001,c:colors[Math.floor(Math.random()*colors.length)],sp:2,amp:.25})}
   // nebulae / cosmic clouds — brighter, more saturated
   sNebulae=[];
   sNebulae.push({x:sW*.15,y:sH*.2,rx:sW*.22,ry:sH*.15,c:'110,60,180',a:.09,rot:.2});
@@ -287,20 +287,21 @@ function dSolar(t){
     const amp=s.amp||.4;
     const f=(1-amp)+amp*(.5+.5*Math.sin(t*s.s+s.o));
     const a=Math.min(1,s.a*f);
-    // base halo — much bigger (6x) and brighter center
-    const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*6);
-    hg.addColorStop(0,`rgba(${s.c},${a*.85})`);
-    hg.addColorStop(.3,`rgba(${s.c},${a*.3})`);
-    hg.addColorStop(.7,`rgba(${s.c},${a*.08})`);
+    // base halo — MASSIVE (10x) for 1/3 screen glow coverage
+    const hg=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*10);
+    hg.addColorStop(0,`rgba(${s.c},${a*.95})`);
+    hg.addColorStop(.2,`rgba(${s.c},${a*.5})`);
+    hg.addColorStop(.5,`rgba(${s.c},${a*.18})`);
+    hg.addColorStop(.8,`rgba(${s.c},${a*.05})`);
     hg.addColorStop(1,`rgba(${s.c},0)`);
-    sx.beginPath();sx.arc(s.x,s.y,s.r*6,0,Math.PI*2);sx.fillStyle=hg;sx.fill();
+    sx.beginPath();sx.arc(s.x,s.y,s.r*10,0,Math.PI*2);sx.fillStyle=hg;sx.fill();
     // bright core — double draw for punch
     sx.beginPath();sx.arc(s.x,s.y,s.r,0,Math.PI*2);sx.fillStyle=`rgba(${s.c},${Math.min(1,a*1.2)})`;sx.fill();
     sx.beginPath();sx.arc(s.x,s.y,s.r*.5,0,Math.PI*2);sx.fillStyle=`rgba(255,255,255,${a*.9})`;sx.fill();
-    // sparkle: cross rays (8-way, longer + brighter)
-    if(s.sp===1){const rl=s.r*10*f;const rd=s.r*6.5*f;sx.beginPath();sx.moveTo(s.x-rl,s.y);sx.lineTo(s.x+rl,s.y);sx.moveTo(s.x,s.y-rl);sx.lineTo(s.x,s.y+rl);sx.strokeStyle=`rgba(${s.c},${a*.75})`;sx.lineWidth=1.0;sx.stroke();sx.beginPath();sx.moveTo(s.x-rd,s.y-rd);sx.lineTo(s.x+rd,s.y+rd);sx.moveTo(s.x+rd,s.y-rd);sx.lineTo(s.x-rd,s.y+rd);sx.strokeStyle=`rgba(${s.c},${a*.4})`;sx.lineWidth=.7;sx.stroke()}
-    // pulse: huge breathing halo
-    if(s.sp===2){const pf=.4+.6*(.5+.5*Math.sin(t*s.s+s.o));const pa=s.a*pf;const hg2=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*12);hg2.addColorStop(0,`rgba(${s.c},${pa*.5})`);hg2.addColorStop(.35,`rgba(${s.c},${pa*.18})`);hg2.addColorStop(.7,`rgba(${s.c},${pa*.05})`);hg2.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*12,0,Math.PI*2);sx.fillStyle=hg2;sx.fill()}
+    // sparkle: cross rays (8-way, super long)
+    if(s.sp===1){const rl=s.r*14*f;const rd=s.r*9*f;sx.beginPath();sx.moveTo(s.x-rl,s.y);sx.lineTo(s.x+rl,s.y);sx.moveTo(s.x,s.y-rl);sx.lineTo(s.x,s.y+rl);sx.strokeStyle=`rgba(${s.c},${a*.8})`;sx.lineWidth=1.3;sx.stroke();sx.beginPath();sx.moveTo(s.x-rd,s.y-rd);sx.lineTo(s.x+rd,s.y+rd);sx.moveTo(s.x+rd,s.y-rd);sx.lineTo(s.x-rd,s.y+rd);sx.strokeStyle=`rgba(${s.c},${a*.5})`;sx.lineWidth=.9;sx.stroke()}
+    // pulse: HUGE breathing halo (20x)
+    if(s.sp===2){const pf=.4+.6*(.5+.5*Math.sin(t*s.s+s.o));const pa=s.a*pf;const hg2=sx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*20);hg2.addColorStop(0,`rgba(${s.c},${pa*.6})`);hg2.addColorStop(.25,`rgba(${s.c},${pa*.28})`);hg2.addColorStop(.55,`rgba(${s.c},${pa*.1})`);hg2.addColorStop(.85,`rgba(${s.c},${pa*.02})`);hg2.addColorStop(1,`rgba(${s.c},0)`);sx.beginPath();sx.arc(s.x,s.y,s.r*20,0,Math.PI*2);sx.fillStyle=hg2;sx.fill()}
   });
   sx.restore();
 
